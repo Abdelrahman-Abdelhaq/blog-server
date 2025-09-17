@@ -23,6 +23,11 @@ app.get('/posts/:id', async (req,res) => {
 })
 
 app.post("/posts" , addPost)
+app.post('/signup', async (req,res) => {
+    const {user,mail,pass} = req.body
+    const result = await pool.query('Insert into users(user_name,user_email,user_password) values($1,$2,$3)',[user,mail,pass])
+    res.json("New User Added Successfully!")
+} )
 
 app.delete('/posts/:id',deletePost)
 
