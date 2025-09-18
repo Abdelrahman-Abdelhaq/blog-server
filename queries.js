@@ -1,6 +1,12 @@
 export const gettingPostsQ = (limit,offset) => `select * from posts order by post_id asc limit ${limit} offset ${offset}`
 
+export const gettingPostQ = 'select * from posts where post_id =$1'
+
+export const gettingComments = 'select * from post_comments where post_id=$1'
+
 export const addingPostQ = "insert into posts(post_category,post_title,post_description,post_paragraph) values($1,$2,$3,$4) returning *"
+
+export const addingCommentQ = 'insert into post_comments(comment_paragraph,post_id) values($1,$2) returning  *'
 
 export const deleteingPostQ = "delete from posts where post_id=$1"
 
