@@ -60,12 +60,20 @@ export const addUser = async (req, res) => {
 export const userLogin = async (req, res) => {
     const mail = req.body.mail.toLowerCase()
     const pass = req.body.pass
+    const cPass = pass
     try {
-        const result = await pool.query(userLoginQ,[mail,pass])
-        if(result.rowCount > 0 ){
-            res.status(200).json("Login Successful")
-        }else{
-            res.status(401).json("Login Failed")
+        const result = await pool.query(userLoginQ,[mail])
+        const hashedPass = result.rows[0].user_password
+        // if(result.rowCount > 0 ){
+        //     res.status(200).json("Login Successful")
+        // }else{
+        //     res.status(401).json("Login Failed")
+        // }
+        const match = await bcrypt.compare(cPass,hashedPass)
+        if(match) {
+            res.status(200).json("successful")
+        }else {
+            res.status(401).json("UnAuthorized Access")
         }
     } catch (error) {
         console.error(error)
