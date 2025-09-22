@@ -8,6 +8,10 @@ export const addingPostQ = "insert into posts(post_category,post_title,post_desc
 
 export const addingCommentQ = 'insert into post_comments(comment_paragraph,post_id) values($1,$2) returning  *'
 
+export const addingUserQ = 'insert into users(user_name,user_email,user_password) values ($1,$2,$3)'
+
+export const userLoginQ = 'select * from users where user_email= $1 and user_password= $2'
+
 export const deleteingPostQ = "delete from posts where post_id=$1"
 
 // export const updatingPostQ = "UPDATE post SET post_category = $1, post_title = $2, post_description=$3, post_paragraph=$4 where post_id = $5"
