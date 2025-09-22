@@ -10,7 +10,7 @@ export const addingCommentQ = 'insert into post_comments(comment_paragraph,post_
 
 export const addingUserQ = 'insert into users(user_name,user_email,user_password) values ($1,$2,$3)'
 
-export const userLoginQ = 'select * from users where user_email= $1 and user_password= $2'
+export const userLoginQ = 'select user_password from users where user_email = $1'
 
 export const deleteingPostQ = "delete from posts where post_id=$1"
 
