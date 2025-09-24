@@ -1,6 +1,7 @@
 import { addingCommentQ, addingPostQ, addingUserQ, deleteingPostQ, gettingComments, gettingPostQ, gettingPostsQ, userLoginQ, /*updatingPostQ*/ } from "./queries.js";
 import pool from "./db.js";
 import bcrypt from "bcrypt"
+import jwt from 'jsonwebtoken'
 
 export const getPosts = async (req,res)=>{
     const {limit,offset} = req.query;
@@ -61,17 +62,21 @@ export const userLogin = async (req, res) => {
     const mail = req.body.mail.toLowerCase()
     const pass = req.body.pass
     const cPass = pass
+    const payLoad = {
+        mail:mail,
+    }
+    
+    const secretKey = process.env.secretKeyJWT
     try {
         const result = await pool.query(userLoginQ,[mail])
         const hashedPass = result.rows[0].user_password
-        // if(result.rowCount > 0 ){
-        //     res.status(200).json("Login Successful")
-        // }else{
-        //     res.status(401).json("Login Failed")
-        // }
         const match = await bcrypt.compare(cPass,hashedPass)
         if(match) {
-            res.status(200).json("successful")
+            const token = jwt.sign(payLoad,secretKey)
+            res.status(200).json({
+                message: "Loged In",
+                token: token
+            })
         }else {
             res.status(401).json("UnAuthorized Access")
         }
