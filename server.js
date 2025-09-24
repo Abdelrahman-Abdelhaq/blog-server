@@ -25,11 +25,6 @@ app.post('/', userLogin)
 
 app.delete('/posts/:id',deletePost)
 
-app.put('/postpage', async(req,res) => {
-    const {comment_id,post_id} = req.body
-    const result = await pool.query('update post_comments set comment_likes=comment_likes + 1 where comment_id=$1 and post_id=$2',[comment_id,post_id])
-    res.json(result.rows[0])
-})
 
 app.listen(port, ()=>{
     console.log(`Listening on Port ${port}`)
