@@ -3,6 +3,17 @@ import pool from "./db.js";
 import bcrypt from "bcrypt"
 import jwt from 'jsonwebtoken'
 
+const accessSecretKey = process.env.accessTokenSecret
+const refreshSecretKey = process.env.refreshTokenSecret
+
+const generateAccessToken = (payload) => {
+    return jwt.sign(payload,accessSecretKey,{expiresIn:"15m"})
+}
+
+const generateRefreshToken = (payload) => {
+    return jwt.sign(payload,refreshSecretKey,{expiresIn:"7d"})
+}
+
 export const getPosts = async (req,res)=>{
     const {limit,offset} = req.query;
     const result = await pool.query(gettingPostsQ(limit,offset))
@@ -25,11 +36,28 @@ export const getComments = async (req,res) => {
     res.json(result.rows)
 }
 
-export const addPost = async (req,res)=>{
-    const {post_category,post_title,post_description,post_paragraph} = req.body;
-    const result = await pool.query(addingPostQ,[post_category,post_title,post_description,post_paragraph])
-    res.json(result.rows[0])
-}
+export const addPost = async (req, res) => {
+console.log("Decoded user:", req.user);
+console.log("req.user:", req.user);
+console.log("req.body:", req.body);
+  const { post_category, post_title, post_description, post_paragraph } = req.body;
+  const userId = req.user.userId; 
+
+  try {
+    const result = await pool.query(addingPostQ, [
+      post_category,
+      post_title,
+      post_description,
+      post_paragraph,
+      userId
+    ]);
+
+    res.status(201).json(result.rows[0]); 
+  } catch (error) {
+    console.error("Error adding post:", error);
+    res.status(500).json({ message: "Failed to add post" });
+  }
+};
 
 export const addComment = async (req,res) => {
     const {id} = req.params
@@ -61,40 +89,95 @@ export const addUser = async (req, res) => {
 export const userLogin = async (req, res) => {
     const mail = req.body.mail.toLowerCase()
     const pass = req.body.pass
-    const cPass = pass
-    const payLoad = {
-        mail:mail,
-    }
-    
-    const secretKey = process.env.secretKeyJWT
+
     try {
         const result = await pool.query(userLoginQ,[mail])
-        const hashedPass = result.rows[0].user_password
-        const match = await bcrypt.compare(cPass,hashedPass)
-        if(match) {
-            const token = jwt.sign(payLoad,secretKey)
-            res.status(200).json({
-                message: "Loged In",
-                token: token
-            })
-        }else {
-            res.status(401).json("UnAuthorized Access")
+        if(result.rows.length === 0)
+            {return res.status(404).json("Email is Not Registered !")}
+        const { user_id, user_name, user_password } = result.rows[0];
+        const hashedPass = user_password;
+        const match = await bcrypt.compare(pass,hashedPass)
+        if(!match){
+            return res.status(401).json("UnAuthorized Access!")
         }
+        const payload = {userId: user_id,email: mail}
+        const accessToken = generateAccessToken(payload)
+        const refreshToken = generateRefreshToken(payload)
+
+        return res.status(200).json({
+            message:"Logged In",
+            accessToken,
+            refreshToken,
+            user: {id: user_id,name: user_name,email: mail}
+        })
     } catch (error) {
-        console.error(error)
-        res.status(500).json("Server Error")
+        console.error(`Login Error ${error}`)
+        res.status(500).json("Server Error!")
     }
 }
 
-export const deletePost = async (req,res) =>{
-    const {id} = req.params;
-    const result = await pool.query(deleteingPostQ,[id])
-    res.json("Post Deleted Successfully!")
-}
+export const refreshAccessToken = (req, res) => {
+  try {
+    const { refreshToken } = req.body;
 
+    if (!refreshToken) {
+      return res.status(401).json({ message: "No refresh token provided" });
+    }
+
+    jwt.verify(refreshToken, process.env.refreshTokenSecret, (err, decoded) => {
+      if (err) {
+        return res.status(403).json({ message: "Invalid or expired refresh token" });
+      }
+
+      const newAccessToken = jwt.sign(
+        { userId: decoded.userId, email: decoded.email },
+        process.env.accessTokenSecret,
+        { expiresIn: "15m" }
+      );
+
+      return res.status(200).json({ accessToken: newAccessToken });
+    });
+  } catch (error) {
+    console.error("Refresh token error:", error);
+    return res.status(500).json({ message: "Server error while refreshing token" });
+  }
+};
 // export const updatePost = async(req,res)=>{
 //     const {id} = req.params;
 //     const {post_category,post_title,post_description,post_paragraph} = req.body;
 //     const result = await pool.query(updatingPostQ,[post_category,post_title,post_description,post_paragraph,id])
 //     res.json(result.rows[0])
 // }
+
+
+
+
+
+// const cPass = pass
+//     const payLoad = {
+//         mail:mail,
+//     }
+    
+//     try {
+//         const result = await pool.query(userLoginQ,[mail])
+//         const hashedPass = result.rows[0].user_password
+//         const match = await bcrypt.compare(cPass,hashedPass)
+//         if(match) {
+//             const token = jwt.sign(payLoad,secretKey)
+//             res.status(200).json({
+//                 message: "Loged In",
+//                 token: token
+//             })
+//         }else if (!match){
+//             res.status(401).json("UnAuthorized Access")
+//         }
+//     } catch (error) {
+//         res.status(500).json("Server Error")
+//     }
+// }
+
+export const deletePost = async (req,res) =>{
+    const {id} = req.params;
+    const result = await pool.query(deleteingPostQ,[id])
+    res.json("Post Deleted Successfully!")
+}
