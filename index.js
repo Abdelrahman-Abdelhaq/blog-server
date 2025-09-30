@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json())
 
-app.get('/posts',getPosts)
+app.get('/posts',verifyToken,getPosts)
 app.get('/posts/:id', getPost )
 app.get('/postpage/:id' , getComments)
 
