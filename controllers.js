@@ -17,16 +17,13 @@ const generateRefreshToken = (payload) => {
 export const getPosts = async (req, res) => {
   try {
     const { limit, offset } = req.query;
-    const userId = req.user.user_id;   
+    const userId = req.user.userId;   
     const parsedLimit = parseInt(limit,10)
     const parsedOffset = parseInt(offset,10)
-    console.log("req.user:", req.user);
-    console.log("limit:", limit, "offset:", offset);
-    console.log("parsed:", parsedLimit, parsedOffset);
     const result = await pool.query(gettingPostsQ, [userId, parsedLimit, parsedOffset]);
     res.json(result.rows);
   } catch (error) {
-    console.error("Error fetching posts:", error);   // full error, not just .message
+    console.error("Error fetching posts:", error);  
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
