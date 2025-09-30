@@ -1,12 +1,13 @@
-export const gettingPostsQ = (limit, offset) => `
+export const gettingPostsQ = `
 SELECT 
   posts.*, 
   users.user_name, 
   users.user_email
 FROM posts
 JOIN users ON posts.user_id = users.user_id
+WHERE posts.user_id = $1
 ORDER BY posts.post_id ASC
-LIMIT ${limit} OFFSET ${offset};
+LIMIT $2 OFFSET $3
 `;
 export const gettingPostQ = 'select * from posts where post_id =$1'
 

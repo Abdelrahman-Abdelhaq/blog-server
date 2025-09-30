@@ -14,11 +14,18 @@ const generateRefreshToken = (payload) => {
     return jwt.sign(payload,refreshSecretKey,{expiresIn:"7d"})
 }
 
-export const getPosts = async (req,res)=>{
-    const {limit,offset} = req.query;
-    const result = await pool.query(gettingPostsQ(limit,offset))
+export const getPosts = async (req, res) => {
+  try {
+    const { limit, offset } = req.query;
+    const userId = req.user.user_id;   
+    const result = await pool.query(gettingPostsQ, [userId, limit, offset]);
     res.json(result.rows);
-}
+  } catch (error) {
+    console.error("Error fetching posts:", error.message);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 export const getPost = async (req,res) => {
     try {
