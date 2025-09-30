@@ -23,8 +23,8 @@ export const getPosts = async (req, res) => {
     const result = await pool.query(gettingPostsQ, [userId, parsedLimit, parsedOffset]);
     res.json(result.rows);
   } catch (error) {
-    console.error("Error fetching posts:", error.message);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error fetching posts:", error); 
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
